@@ -1,1 +1,0 @@
-# myfoodscan_app
