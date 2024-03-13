@@ -14,10 +14,6 @@
   },
   "dependencies": {
     "@expo/vector-icons": "^14.0.0",
-    "@react-native-firebase/app": "^19.0.1",
-    "@react-native-firebase/auth": "^19.0.1",
-    "@react-native-firebase/crashlytics": "^19.0.1",
-    "@react-native-firebase/ml": "^19.0.1",
     "@react-navigation/native": "^6.0.2",
     "expo": "~50.0.11",
     "expo-barcode-scanner": "~12.9.3",
@@ -29,6 +25,7 @@
     "expo-status-bar": "~1.11.1",
     "expo-system-ui": "~2.9.3",
     "expo-web-browser": "~12.8.2",
+    "firebase": "^10.8.1",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-native": "0.73.4",
