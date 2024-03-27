@@ -45,7 +45,7 @@ export default function RegisterScreen() {
       });
       console.log("Signup successful, user:", user);
       setLoading(false);
-      // navigation.navigate("Questionnaire");
+      navigation.navigate("Questionnaire");
     } catch (error) {
       console.error("Error during signup or user details addition:", error);
       setLoading(false);
