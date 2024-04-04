@@ -6,7 +6,7 @@ import { auth, db } from "@/config/firebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
 import { User } from "firebase/auth";
 import React, { useEffect, useState } from "react";
-import { PenIcon, PencilIcon } from "lucide-react-native";
+import { PencilIcon } from "lucide-react-native";
 
 export default function ProfileScreen() {
   const navigation = useNavigation<NavigationProp<any>>();

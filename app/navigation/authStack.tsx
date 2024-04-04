@@ -12,7 +12,6 @@ export default function AuthStack() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Sign In" component={LoginScreen} />
       <Stack.Screen name="Sign Up" component={RegisterScreen} />
-      <Stack.Screen name="Questionnaire" component={QuestionnaireScreen} />
     </Stack.Navigator>
   );
 }
