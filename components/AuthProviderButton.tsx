@@ -1,9 +1,4 @@
-import {
-  GestureResponderEvent,
-  StyleSheet,
-  TouchableHighlight,
-  ViewStyle,
-} from "react-native";
+import { StyleSheet, TouchableHighlight, ViewStyle } from "react-native";
 import React from "react";
 import { FontAwesome5 } from "@expo/vector-icons";
 
@@ -11,7 +6,15 @@ function FA5Icon(props: {
   name: React.ComponentProps<typeof FontAwesome5>["name"];
   color: string;
 }) {
-  return <FontAwesome5 size={12} style={{ marginBottom: -3 }} {...props} />;
+  return (
+    <FontAwesome5
+      size={22}
+      style={{
+        marginBottom: -3,
+      }}
+      {...props}
+    />
+  );
 }
 
 interface Props {
@@ -55,10 +58,12 @@ export default function AuthProviderButton({
 
 const styles = StyleSheet.create({
   button: {
+    alignItems: "center",
+    justifyContent: "center",
     marginVertical: 10,
-    marginHorizontal: 4,
+    marginHorizontal: 10,
     borderRadius: 999,
-    width: 15,
-    height: "auto",
+    width: 50,
+    height: 50,
   },
 });

@@ -5,11 +5,11 @@ import {
   Image,
   KeyboardAvoidingView,
   StyleSheet,
-  Text,
   TextInput,
   TouchableOpacity,
-  View,
 } from "react-native";
+import { Text, View } from "@/components/Themed";
+
 import React, { useState } from "react";
 import { NavigationProp, useNavigation } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
@@ -22,6 +22,10 @@ import Divider from "@/components/Divider";
 
 import { useFormik } from "formik";
 import * as yup from "yup";
+import Apple from "@/components/auth-providers/Apple";
+import Google from "@/components/auth-providers/Google";
+import Facebook from "@/components/auth-providers/Facebook";
+import Yahoo from "@/components/auth-providers/Yahoo";
 
 const loginValidationSchema = yup.object().shape({
   email: yup
@@ -177,6 +181,18 @@ export default function LoginScreen() {
             <Text style={{ marginHorizontal: 6 }}>or Sign In with</Text>
             <Divider />
           </View>
+          <View
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              justifyContent: "center",
+            }}
+          >
+            <Apple />
+            <Google />
+            <Facebook />
+            <Yahoo />
+          </View>
         </View>
 
         <StatusBar style="auto" />
@@ -197,7 +213,7 @@ const styles = StyleSheet.create({
     color: "red",
   },
   container: {
-    marginHorizontal: 20,
+    paddingHorizontal: 20,
     flex: 1,
     justifyContent: "center",
   },
@@ -232,8 +248,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   route: {
-    marginHorizontal: 20,
-    marginBottom: 30,
+    paddingHorizontal: 20,
+    paddingBottom: 30,
     justifyContent: "flex-end",
     alignItems: "center",
   },

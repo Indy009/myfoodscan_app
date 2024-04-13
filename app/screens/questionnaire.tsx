@@ -1,57 +1,16 @@
-import {
-  Alert,
-  FlatList,
-  Pressable,
-  StyleSheet,
-  Switch,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Alert, StyleSheet, TouchableOpacity, Text } from "react-native";
+import { Text as StyledText, View } from "@/components/Themed";
+
 import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {
-  BeefIcon,
-  CheckIcon,
-  HamIcon,
-  MilkOffIcon,
-  SaladIcon,
-  VeganIcon,
-  WheatOffIcon,
-} from "lucide-react-native";
-import FishIcon from "@/components/icons/FishIcon";
-import PeanutIcon from "@/components/icons/PeanutIcon";
-import SesameIcon from "@/components/icons/SesameIcon";
-import ShellfishIcon from "@/components/icons/ShellfishIcon";
-import SoyIcon from "@/components/icons/SoyIcon";
+import { CheckIcon } from "lucide-react-native";
 
 import { auth, db } from "@/config/firebaseConfig";
-import { doc, setDoc, updateDoc } from "firebase/firestore";
+import { doc, updateDoc } from "firebase/firestore";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
-
-type SelectedOptions = {
-  [key: string]: boolean;
-};
-
-type DietaryOption = {
-  key: string;
-  label: string;
-  icon: any;
-};
-
-const dietaryOptions: DietaryOption[] = [
-  { key: "vegan", label: "Vegan", icon: VeganIcon },
-  { key: "dairyFree", label: "Dairy-Free", icon: MilkOffIcon },
-  { key: "vegatarian", label: "Vegetarian", icon: SaladIcon },
-  { key: "glutenFree", label: "Gluten-Free", icon: WheatOffIcon },
-  { key: "noBeef", label: "No Beef", icon: BeefIcon },
-  { key: "nut", label: "Nut Allergy", icon: PeanutIcon },
-  { key: "noPork", label: "No Pork", icon: HamIcon },
-  { key: "noSoy", label: "No Soy", icon: SoyIcon },
-  { key: "noFish", label: "No Fish", icon: FishIcon },
-  { key: "noSesame", label: "No Sesame", icon: SesameIcon },
-  { key: "noShell", label: "No Shellfish", icon: ShellfishIcon },
-];
+import DietaryPreferences, {
+  SelectedOptions,
+} from "@/components/DietaryPreferences";
 
 export default function QuestionnaireScreen() {
   const navigation = useNavigation<NavigationProp<any>>();
@@ -96,55 +55,24 @@ export default function QuestionnaireScreen() {
   const isAnyOptionsSelected =
     noneApply || Object.values(selectedOptions).some((value) => value);
 
-  const renderItem = ({
-    item,
-    index,
-  }: {
-    item: DietaryOption;
-    index: number;
-  }) => {
-    const IconComponent = item.icon;
-    const isOdd = index % 2 !== 0;
-    return (
-      <View style={[styles.itemContainer, isOdd ? styles.itemRight : null]}>
-        <Pressable
-          style={({ pressed }) => [
-            styles.optionButton,
-            selectedOptions[item.key] ? styles.optionButtonSelected : null,
-            pressed ? styles.optionButtonSelected : null,
-          ]}
-          onPress={() => handleToggle(item.key)}
-          disabled={noneApply}
-        >
-          {IconComponent && (
-            <IconComponent color="black" height={24} width={24} />
-          )}
-          <Text style={styles.optionButtonText}>{item.label}</Text>
-        </Pressable>
-      </View>
-    );
-  };
-
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Do any of the following apply to you?</Text>
+        <StyledText style={styles.title}>
+          Do any of the following apply to you?
+        </StyledText>
         <Text style={styles.subtitle}>
           Don't worry, you can always edit this later.
         </Text>
       </View>
-      <View style={styles.content}>
-        <FlatList
-          data={dietaryOptions}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.key}
-          numColumns={2}
-          columnWrapperStyle={styles.optionWrapper}
+      <View style={{ flex: 4 }}>
+        <DietaryPreferences
+          selectedOptions={selectedOptions}
+          onToggle={handleToggle}
+          noneApply={noneApply}
+          onNoneApplyToggle={handleNoneApplyToggle}
+          isEditable={true}
         />
-      </View>
-      <View style={styles.checkboxContainer}>
-        <Switch value={noneApply} onValueChange={handleNoneApplyToggle} />
-        <Text style={styles.checkboxLabel}>None of these apply</Text>
       </View>
       <TouchableOpacity
         style={[
@@ -157,21 +85,22 @@ export default function QuestionnaireScreen() {
         <CheckIcon color="black" />
         <Text style={styles.continueButtonText}>Finished</Text>
       </TouchableOpacity>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginHorizontal: 40,
+    paddingHorizontal: 40,
+    paddingVertical: 40,
   },
   header: {
     flex: 1,
     justifyContent: "flex-start",
     alignItems: "center",
-    marginHorizontal: 22,
-    marginTop: 70,
+    paddingHorizontal: 22,
+    paddingTop: 70,
   },
   title: {
     fontSize: 22,
@@ -182,34 +111,6 @@ const styles = StyleSheet.create({
     color: "gray",
     marginTop: 14,
   },
-  content: {
-    flex: 4,
-    marginTop: 25,
-  },
-  itemContainer: {
-    width: "48%",
-  },
-  itemRight: {
-    marginLeft: "5%",
-  },
-  optionWrapper: {
-    justifyContent: "space-between",
-    marginBottom: 20,
-  },
-  optionButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    margin: 5,
-    padding: 10,
-    paddingHorizontal: 15,
-    backgroundColor: "#E7FCDA",
-    borderRadius: 20,
-  },
-  optionButtonText: { marginLeft: 10 },
-  optionButtonSelected: { backgroundColor: "#9AEF66" },
-  checkboxContainer: { flex: 1, flexDirection: "row", alignItems: "center" },
-  checkboxLabel: { marginLeft: 10 },
   continueButton: {
     flexDirection: "row",
     justifyContent: "center",

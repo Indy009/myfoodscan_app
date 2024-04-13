@@ -1,0 +1,6 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -project /Users/jedaelisbon/Documents/myfoodscan_app/ios/myfoodscanapp.xcodeproj -configuration Debug -scheme myfoodscanapp -destination id=03A57F7C-988C-4D1F-9847-559C9834C051
+
+User defaults from command line:
+    IDEPackageSupportUseBuiltinSCM = YES
+

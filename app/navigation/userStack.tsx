@@ -8,7 +8,11 @@ const Stack = createStackNavigator();
 export default function UserStack() {
   return (
     <Stack.Navigator>
-      <Stack.Screen name="Home" component={Home} />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name="Home"
+        component={Home}
+      />
       <Stack.Screen
         options={{ headerShown: false }}
         name="Questionnaire"

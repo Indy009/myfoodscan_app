@@ -1,13 +1,12 @@
 import {
   ActivityIndicator,
   StyleSheet,
-  Text,
   TextInput,
   TouchableOpacity,
-  View,
   Image,
   KeyboardAvoidingView,
 } from "react-native";
+import { Text, View } from "@/components/Themed";
 import React, { useState } from "react";
 import { auth, db } from "@/config/firebaseConfig";
 import { createUserWithEmailAndPassword } from "firebase/auth";
@@ -17,6 +16,10 @@ import { NavigationProp, useNavigation } from "@react-navigation/native";
 import { useFormik } from "formik";
 import * as yup from "yup";
 import Divider from "@/components/Divider";
+import Apple from "@/components/auth-providers/Apple";
+import Google from "@/components/auth-providers/Google";
+import Yahoo from "@/components/auth-providers/Yahoo";
+import Facebook from "@/components/auth-providers/Facebook";
 
 const signupValidationSchema = yup.object().shape({
   firstname: yup.string().required("First Name is required"),
@@ -159,6 +162,18 @@ export default function RegisterScreen() {
             <Text style={{ marginHorizontal: 6 }}>or Register with</Text>
             <Divider />
           </View>
+          <View
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              justifyContent: "center",
+            }}
+          >
+            <Apple />
+            <Google />
+            <Facebook />
+            <Yahoo />
+          </View>
         </View>
 
         <View style={styles.route}>
@@ -178,7 +193,7 @@ const styles = StyleSheet.create({
     color: "red",
   },
   container: {
-    marginHorizontal: 20,
+    paddingHorizontal: 20,
     justifyContent: "center",
     flex: 1,
   },
@@ -213,8 +228,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   route: {
-    marginHorizontal: 20,
-    marginBottom: 30,
+    paddingHorizontal: 20,
+    paddingBottom: 30,
     justifyContent: "flex-end",
     alignItems: "center",
   },
