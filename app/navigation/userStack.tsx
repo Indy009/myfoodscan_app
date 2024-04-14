@@ -13,6 +13,11 @@ export default function UserStack() {
         name="Home"
         component={Home}
       />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name="Questionnaire"
+        component={QuestionnaireScreen}
+      />
     </Stack.Navigator>
   );
 }

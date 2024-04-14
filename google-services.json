@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "161261244857",
+    "project_id": "myfoodscan-backend-99cb3",
+    "storage_bucket": "myfoodscan-backend-99cb3.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:161261244857:android:53d74b87243b7e1bc0a668",
+        "android_client_info": {
+          "package_name": "com.indy9.myfoodscan"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "161261244857-dp6ihagkjei9cfasgb9hqm9rbk1msihn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBMeXg_jCYa1AsaO5j-OEw02vzLu7JbSok"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "161261244857-dp6ihagkjei9cfasgb9hqm9rbk1msihn.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "161261244857-5tiqp1og9723lkggavoo1u49cps0br9s.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.indy9.myfoodscan"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,27 +1,47 @@
 import {
   ActivityIndicator,
-  StatusBar,
   StyleSheet,
-  Text,
   TextInput,
   TouchableOpacity,
-  View,
   Image,
   KeyboardAvoidingView,
 } from "react-native";
+import { Text, View } from "@/components/Themed";
 import React, { useState } from "react";
 import { auth, db } from "@/config/firebaseConfig";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { NavigationProp, useNavigation } from "@react-navigation/native";
 
+import { useFormik } from "formik";
+import * as yup from "yup";
+import Divider from "@/components/Divider";
+import Apple from "@/components/auth-providers/Apple";
+import Google from "@/components/auth-providers/Google";
+import Yahoo from "@/components/auth-providers/Yahoo";
+import Facebook from "@/components/auth-providers/Facebook";
+
+const signupValidationSchema = yup.object().shape({
+  firstname: yup.string().required("First Name is required"),
+  lastname: yup.string().required("Last Name is required"),
+  email: yup
+    .string()
+    .email("Please enter a valid email")
+    .required("Email is required"),
+  password: yup
+    .string()
+    .min(6, "Password must be at least 6 characters")
+    .required("Password is required"),
+});
+
 export default function RegisterScreen() {
-  const [firstname, setFirstname] = useState<string>("");
-  const [lastname, setLastname] = useState<string>("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const navigation = useNavigation<NavigationProp<any>>();
+  const formik = useFormik({
+    initialValues: { firstname: "", lastname: "", email: "", password: "" },
+    validationSchema: signupValidationSchema,
+    onSubmit: async () => handleSignup(),
+  });
 
   const handleLogin = async () => {
     navigation.navigate("Sign In");
@@ -32,16 +52,16 @@ export default function RegisterScreen() {
     try {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
-        email,
-        password
+        formik.values.email,
+        formik.values.password
       );
       const user = userCredential.user;
       const userRef = doc(db, "users", user.uid);
       await setDoc(userRef, {
         uid: user.uid,
-        firstName: firstname,
-        lastName: lastname,
-        email: email,
+        firstName: formik.values.firstname,
+        lastName: formik.values.lastname,
+        email: formik.values.email,
       });
       console.log("Signup successful, user:", user);
       setLoading(false);
@@ -69,61 +89,111 @@ export default function RegisterScreen() {
           <View>
             <Text style={{ marginTop: 8 }}>First Name</Text>
             <TextInput
-              value={firstname}
+              value={formik.values.firstname}
               style={styles.input}
-              placeholder="First Name"
-              onChangeText={(text) => setFirstname(text)}
+              placeholder="Enter your First Name..."
+              onChangeText={formik.handleChange("firstname")}
+              onBlur={formik.handleBlur("firstname")}
             />
+            {formik.touched.firstname && formik.errors.firstname && (
+              <Text style={styles.errorText}>{formik.errors.firstname}</Text>
+            )}
+
             <Text style={{ marginTop: 8 }}>Last Name</Text>
             <TextInput
-              value={lastname}
+              value={formik.values.lastname}
               style={styles.input}
-              placeholder="First Name"
-              onChangeText={(text) => setLastname(text)}
+              placeholder="Enter your Last Name..."
+              onChangeText={formik.handleChange("lastname")}
+              onBlur={formik.handleBlur("lastname")}
             />
+            {formik.touched.lastname && formik.errors.lastname && (
+              <Text style={styles.errorText}>{formik.errors.lastname}</Text>
+            )}
+
             <Text style={{ marginTop: 8 }}>Email</Text>
             <TextInput
-              value={email}
+              value={formik.values.email}
               style={styles.input}
-              placeholder="Email"
-              onChangeText={(text) => setEmail(text)}
+              placeholder="Enter your Email..."
+              onChangeText={formik.handleChange("email")}
+              onBlur={formik.handleBlur("email")}
               autoCapitalize="none"
             />
+            {formik.touched.email && formik.errors.email && (
+              <Text style={styles.errorText}>{formik.errors.email}</Text>
+            )}
+
             <Text style={{ marginTop: 8 }}>Password</Text>
             <TextInput
               secureTextEntry={true}
-              value={password}
+              value={formik.values.password}
               style={styles.input}
-              placeholder="Password"
-              onChangeText={(text) => setPassword(text)}
+              placeholder="Enter your Password..."
+              onChangeText={formik.handleChange("password")}
+              onBlur={formik.handleBlur("password")}
               autoCapitalize="none"
             />
+            {formik.touched.password && formik.errors.password && (
+              <Text style={styles.errorText}>{formik.errors.password}</Text>
+            )}
+
             {loading ? (
               <ActivityIndicator size="large" color="#0000ff" />
             ) : (
               <TouchableOpacity
                 style={styles.buttonContainer}
-                onPress={handleSignup}
+                onPress={() => handleSignup()}
               >
-                <Text style={styles.buttonText}>Signup</Text>
+                <Text style={styles.buttonText}>Sign Up</Text>
               </TouchableOpacity>
             )}
           </View>
+          <View
+            style={{
+              width: "100%",
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              marginVertical: 6,
+            }}
+          >
+            <Divider />
+            <Text style={{ marginHorizontal: 6 }}>or Register with</Text>
+            <Divider />
+          </View>
+          <View
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              justifyContent: "center",
+            }}
+          >
+            <Apple />
+            <Google />
+            <Facebook />
+            <Yahoo />
+          </View>
+        </View>
+
+        <View style={styles.route}>
+          <Text>Already have an account?</Text>
+          <TouchableOpacity onPress={handleLogin}>
+            <Text style={{ color: "#356ec3" }}>Log In</Text>
+          </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
-      <View style={styles.route}>
-        <Text>Already have an account?</Text>
-        <TouchableOpacity onPress={handleLogin}>
-          <Text style={{ color: "#356ec3" }}>Log In</Text>
-        </TouchableOpacity>
-      </View>
     </>
   );
 }
 
 const styles = StyleSheet.create({
+  errorText: {
+    fontSize: 12,
+    color: "red",
+  },
   container: {
-    marginHorizontal: 20,
+    paddingHorizontal: 20,
     justifyContent: "center",
     flex: 1,
   },
@@ -158,8 +228,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   route: {
-    marginHorizontal: 20,
-    marginBottom: 30,
+    paddingHorizontal: 20,
+    paddingBottom: 30,
     justifyContent: "flex-end",
     alignItems: "center",
   },

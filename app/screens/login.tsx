@@ -1,34 +1,67 @@
 import {
+  Platform,
   ActivityIndicator,
-  Button,
+  Alert,
   Image,
   KeyboardAvoidingView,
   StyleSheet,
-  Text,
   TextInput,
   TouchableOpacity,
-  View,
 } from "react-native";
+import { Text, View } from "@/components/Themed";
+
 import React, { useState } from "react";
 import { NavigationProp, useNavigation } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
 import { auth } from "@/config/firebaseConfig";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import {
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
+} from "firebase/auth";
+import Divider from "@/components/Divider";
+
+import { useFormik } from "formik";
+import * as yup from "yup";
+import Apple from "@/components/auth-providers/Apple";
+import Google from "@/components/auth-providers/Google";
+import Facebook from "@/components/auth-providers/Facebook";
+import Yahoo from "@/components/auth-providers/Yahoo";
+
+const loginValidationSchema = yup.object().shape({
+  email: yup
+    .string()
+    .email("Please enter a valid email")
+    .required("Email address is required."),
+  password: yup
+    .string()
+    .min(6, "Password must be at least 6 characters")
+    .required("Password is required"),
+});
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const navigation = useNavigation<NavigationProp<any>>();
+
+  const formik = useFormik({
+    initialValues: { email: "", password: "" },
+    validationSchema: loginValidationSchema,
+    onSubmit: async (values) => {
+      handleLogin(values.email, values.password);
+    },
+  });
 
   const handleSignup = async () => {
     navigation.navigate("Sign Up");
   };
 
-  const handleLogin = async () => {
+  const handleLogin = async (email: string, password: string) => {
     setLoading(true);
     try {
-      const user = await signInWithEmailAndPassword(auth, email, password);
+      const user = await signInWithEmailAndPassword(
+        auth,
+        formik.values.email,
+        formik.values.password
+      );
       setLoading(false);
       if (user) navigation.navigate("Home");
     } catch (error: any) {
@@ -47,6 +80,38 @@ export default function LoginScreen() {
     }
   };
 
+  const handleForgotPassword = async () => {
+    if (!formik.values.email) {
+      Alert.alert("Input Required", "Please enter your email address.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await sendPasswordResetEmail(auth, formik.values.email);
+      setLoading(false);
+      Alert.alert(
+        "Check your Email",
+        "A link to reset your password has been sent."
+      );
+    } catch (error: any) {
+      setLoading(false);
+
+      if (error.code === "auth/user-not-found") {
+        Alert.alert("Error", "No user found with this email address.");
+      } else {
+        Alert.alert(
+          "Error",
+          "Failed to send password reset email. Please try again later."
+        );
+      }
+    }
+  };
+
+  const handleFormSubmit = () => {
+    formik.handleSubmit();
+  };
+
   return (
     <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
       <View style={styles.container}>
@@ -58,31 +123,76 @@ export default function LoginScreen() {
         <View>
           <Text style={{ marginTop: 8 }}>Email</Text>
           <TextInput
-            value={email}
+            value={formik.values.email}
+            onChangeText={formik.handleChange("email")}
+            onBlur={formik.handleBlur("email")}
             style={styles.input}
-            placeholder="Email"
-            onChangeText={(text) => setEmail(text)}
+            placeholder="Enter your Email...."
             autoCapitalize="none"
           />
+          {formik.touched.email && formik.errors.email && (
+            <Text style={styles.errorText}>{formik.errors.email}</Text>
+          )}
           <Text style={{ marginTop: 8 }}>Password</Text>
           <TextInput
             secureTextEntry={true}
-            value={password}
+            value={formik.values.password}
+            onChangeText={formik.handleChange("password")}
+            onBlur={formik.handleBlur("password")}
             style={styles.input}
-            placeholder="Password"
-            onChangeText={(text) => setPassword(text)}
+            placeholder="Enter your Password..."
             autoCapitalize="none"
           />
-          {loading ? (
-            <ActivityIndicator size="large" color="#0000ff" />
-          ) : (
-            <TouchableOpacity
-              style={styles.buttonContainer}
-              onPress={handleLogin}
-            >
-              <Text style={styles.buttonText}>Login</Text>
-            </TouchableOpacity>
+          {formik.touched.password && formik.errors.password && (
+            <Text style={styles.errorText}>{formik.errors.password}</Text>
           )}
+          <TouchableOpacity
+            onPress={handleForgotPassword}
+            style={{ alignItems: "flex-end", marginVertical: 4 }}
+          >
+            <Text style={{ color: "#356ec3" }}>Forgot Password?</Text>
+          </TouchableOpacity>
+          {loading ? (
+            <ActivityIndicator
+              size="large"
+              color="#0000ff"
+              style={{ marginTop: 4 }}
+            />
+          ) : (
+            <>
+              <TouchableOpacity
+                style={styles.buttonContainer}
+                onPress={handleFormSubmit}
+              >
+                <Text style={styles.buttonText}>Login</Text>
+              </TouchableOpacity>
+            </>
+          )}
+          <View
+            style={{
+              width: "100%",
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              marginVertical: 6,
+            }}
+          >
+            <Divider />
+            <Text style={{ marginHorizontal: 6 }}>or Sign In with</Text>
+            <Divider />
+          </View>
+          <View
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              justifyContent: "center",
+            }}
+          >
+            <Apple />
+            <Google />
+            <Facebook />
+            <Yahoo />
+          </View>
         </View>
 
         <StatusBar style="auto" />
@@ -98,8 +208,12 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
+  errorText: {
+    fontSize: 12,
+    color: "red",
+  },
   container: {
-    marginHorizontal: 20,
+    paddingHorizontal: 20,
     flex: 1,
     justifyContent: "center",
   },
@@ -134,8 +248,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   route: {
-    marginHorizontal: 20,
-    marginBottom: 30,
+    paddingHorizontal: 20,
+    paddingBottom: 30,
     justifyContent: "flex-end",
     alignItems: "center",
   },

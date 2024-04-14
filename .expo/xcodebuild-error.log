@@ -1,0 +1,6 @@
+2024-04-11 03:08:10.799 xcodebuild[19514:6424420] Writing error result bundle to /var/folders/0g/_7h2ygl12fscdx08_kq5prpw0000gn/T/ResultBundle_2024-11-04_03-08-0010.xcresult
+xcodebuild: error: Unable to find a destination matching the provided destination specifier:
+		{ id:03A57F7C-988C-4D1F-9847-559C9834C051 }
+
+	Ineligible destinations for the "myfoodscanapp" scheme:
+		{ platform:iOS, id:dvtdevice-DVTiPhonePlaceholder-iphoneos:placeholder, name:Any iOS Device, error:iOS 17.4 is not installed. To use with Xcode, first download and install the platform }

@@ -10,7 +10,6 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 
 import Colors from "@/constants/Colors";
 import { useColorScheme } from "@/components/useColorScheme";
-import { useClientOnlyValue } from "@/components/useClientOnlyValue";
 import HistoryScreen from "./history";
 import ScannerScreen from "./scanner";
 import ProfileScreen from "./profile";
