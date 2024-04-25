@@ -176,5 +176,4 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#000',
   },
-  // ... other styles if needed ...
 });
