@@ -22,8 +22,7 @@ import DietaryPreferences, {
 } from "@/components/DietaryPreferences";
 
 type UserDetails = {
-  firstName: string;
-  lastName: string;
+  fullName: string;
   email: string;
   dietaryPreferences: {};
   profilePicture?: string;
@@ -32,8 +31,7 @@ type UserDetails = {
 export default function ProfileScreen() {
   const navigation = useNavigation<NavigationProp<any>>();
   const [userDetails, setUserDetails] = useState<UserDetails>({
-    firstName: "",
-    lastName: "",
+    fullName: "",
     email: "",
     dietaryPreferences: {},
   });
@@ -68,8 +66,7 @@ export default function ProfileScreen() {
     if (userSnapshot.exists()) {
       const data = userSnapshot.data();
       setUserDetails({
-        firstName: data.firstName,
-        lastName: data.lastName,
+        fullName: data.fullName,
         email: data.email,
         dietaryPreferences: data.dietaryPreferences || {},
         profilePicture: data.profilePicture || "",
@@ -193,9 +190,7 @@ export default function ProfileScreen() {
             />
           </View>
 
-          <Text style={styles.profileName}>
-            {userDetails.firstName} {userDetails.lastName}
-          </Text>
+          <Text style={styles.profileName}>{userDetails.fullName}</Text>
         </View>
 
         <View style={styles.accountContent}>
@@ -282,7 +277,7 @@ const styles = StyleSheet.create({
   image: {
     width: 240,
     height: 240,
-    borderRadius: 240 / 2,
+    borderRadius: 220 / 2,
   },
   editIcon: {
     position: "absolute",

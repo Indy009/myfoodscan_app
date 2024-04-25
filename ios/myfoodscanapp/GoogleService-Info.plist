@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>161261244857-v9q03v4l3412sapj2nt2oacfpp989r02.apps.googleusercontent.com</string>
+	<string>161261244857-5tiqp1og9723lkggavoo1u49cps0br9s.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.161261244857-v9q03v4l3412sapj2nt2oacfpp989r02</string>
+	<string>com.googleusercontent.apps.161261244857-5tiqp1og9723lkggavoo1u49cps0br9s</string>
 	<key>API_KEY</key>
 	<string>AIzaSyCz5peN1xCodvfZWCkOvdiQyz9y_L829Ls</string>
 	<key>GCM_SENDER_ID</key>
@@ -13,7 +13,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.company.myfoodscan</string>
+	<string>com.indy9.myfoodscan</string>
 	<key>PROJECT_ID</key>
 	<string>myfoodscan-backend-99cb3</string>
 	<key>STORAGE_BUCKET</key>
@@ -29,6 +29,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:161261244857:ios:c473d2c875deeb41c0a668</string>
+	<string>1:161261244857:ios:6841597c9d4f7c1ec0a668</string>
 </dict>
 </plist>

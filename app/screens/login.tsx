@@ -1,5 +1,4 @@
 import {
-  Platform,
   ActivityIndicator,
   Alert,
   Image,
@@ -27,7 +26,7 @@ import Google from "@/components/auth-providers/Google";
 import Facebook from "@/components/auth-providers/Facebook";
 import Yahoo from "@/components/auth-providers/Yahoo";
 
-const loginValidationSchema = yup.object().shape({
+export const loginValidationSchema = yup.object({
   email: yup
     .string()
     .email("Please enter a valid email")
@@ -109,101 +108,107 @@ export default function LoginScreen() {
   };
 
   const handleFormSubmit = () => {
+    if (!formik.isValid || !formik.dirty) {
+      Alert.alert("Invalid", "Please fill in all fields correctly.");
+      return;
+    }
     formik.handleSubmit();
   };
 
   return (
-    <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
-      <View style={styles.container}>
-        <Image
-          source={require("@/assets/images/logo.png")}
-          style={styles.image}
-        />
-        <Text style={styles.heading}>Sign In</Text>
-        <View>
-          <Text style={{ marginTop: 8 }}>Email</Text>
-          <TextInput
-            value={formik.values.email}
-            onChangeText={formik.handleChange("email")}
-            onBlur={formik.handleBlur("email")}
-            style={styles.input}
-            placeholder="Enter your Email...."
-            autoCapitalize="none"
+    <>
+      <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
+        <View style={styles.container}>
+          <Image
+            source={require("@/assets/images/logo.png")}
+            style={styles.image}
           />
-          {formik.touched.email && formik.errors.email && (
-            <Text style={styles.errorText}>{formik.errors.email}</Text>
-          )}
-          <Text style={{ marginTop: 8 }}>Password</Text>
-          <TextInput
-            secureTextEntry={true}
-            value={formik.values.password}
-            onChangeText={formik.handleChange("password")}
-            onBlur={formik.handleBlur("password")}
-            style={styles.input}
-            placeholder="Enter your Password..."
-            autoCapitalize="none"
-          />
-          {formik.touched.password && formik.errors.password && (
-            <Text style={styles.errorText}>{formik.errors.password}</Text>
-          )}
-          <TouchableOpacity
-            onPress={handleForgotPassword}
-            style={{ alignItems: "flex-end", marginVertical: 4 }}
-          >
-            <Text style={{ color: "#356ec3" }}>Forgot Password?</Text>
-          </TouchableOpacity>
-          {loading ? (
-            <ActivityIndicator
-              size="large"
-              color="#0000ff"
-              style={{ marginTop: 4 }}
+          <Text style={styles.heading}>Sign In</Text>
+          <View>
+            <Text style={{ marginTop: 8 }}>Email</Text>
+            <TextInput
+              value={formik.values.email}
+              onChangeText={formik.handleChange("email")}
+              onBlur={formik.handleBlur("email")}
+              style={styles.input}
+              placeholder="Enter your Email...."
+              autoCapitalize="none"
             />
-          ) : (
-            <>
-              <TouchableOpacity
-                style={styles.buttonContainer}
-                onPress={handleFormSubmit}
-              >
-                <Text style={styles.buttonText}>Login</Text>
-              </TouchableOpacity>
-            </>
-          )}
-          <View
-            style={{
-              width: "100%",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-              marginVertical: 6,
-            }}
-          >
-            <Divider />
-            <Text style={{ marginHorizontal: 6 }}>or Sign In with</Text>
-            <Divider />
+            {formik.touched.email && formik.errors.email && (
+              <Text style={styles.errorText}>{formik.errors.email}</Text>
+            )}
+            <Text style={{ marginTop: 8 }}>Password</Text>
+            <TextInput
+              secureTextEntry={true}
+              value={formik.values.password}
+              onChangeText={formik.handleChange("password")}
+              onBlur={formik.handleBlur("password")}
+              style={styles.input}
+              placeholder="Enter your Password..."
+              autoCapitalize="none"
+            />
+            {formik.touched.password && formik.errors.password && (
+              <Text style={styles.errorText}>{formik.errors.password}</Text>
+            )}
+            <TouchableOpacity
+              onPress={handleForgotPassword}
+              style={{ alignItems: "flex-end", marginVertical: 4 }}
+            >
+              <Text style={{ color: "#356ec3" }}>Forgot Password?</Text>
+            </TouchableOpacity>
+            {loading ? (
+              <ActivityIndicator
+                size="large"
+                color="#0000ff"
+                style={{ marginTop: 4 }}
+              />
+            ) : (
+              <>
+                <TouchableOpacity
+                  style={styles.buttonContainer}
+                  onPress={handleFormSubmit}
+                >
+                  <Text style={styles.buttonText}>Login</Text>
+                </TouchableOpacity>
+              </>
+            )}
+            <View
+              style={{
+                width: "100%",
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                marginVertical: 6,
+              }}
+            >
+              <Divider />
+              <Text style={{ marginHorizontal: 6 }}>or Sign In with</Text>
+              <Divider />
+            </View>
+            <View
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                justifyContent: "center",
+              }}
+            >
+              <Apple />
+              <Google />
+              <Facebook />
+              <Yahoo />
+            </View>
           </View>
-          <View
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              justifyContent: "center",
-            }}
-          >
-            <Apple />
-            <Google />
-            <Facebook />
-            <Yahoo />
-          </View>
-        </View>
 
-        <StatusBar style="auto" />
-      </View>
+          <StatusBar style="auto" />
+        </View>
+      </KeyboardAvoidingView>
       <View style={styles.route}>
         <Text>Don't have an account?</Text>
         <TouchableOpacity onPress={handleSignup}>
           <Text style={{ color: "#356ec3" }}>Sign Up</Text>
         </TouchableOpacity>
       </View>
-    </KeyboardAvoidingView>
+    </>
   );
 }
 

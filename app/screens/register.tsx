@@ -21,9 +21,8 @@ import Google from "@/components/auth-providers/Google";
 import Yahoo from "@/components/auth-providers/Yahoo";
 import Facebook from "@/components/auth-providers/Facebook";
 
-const signupValidationSchema = yup.object().shape({
-  firstname: yup.string().required("First Name is required"),
-  lastname: yup.string().required("Last Name is required"),
+export const signupValidationSchema = yup.object({
+  fullname: yup.string().required("Full Name is required"),
   email: yup
     .string()
     .email("Please enter a valid email")
@@ -32,15 +31,30 @@ const signupValidationSchema = yup.object().shape({
     .string()
     .min(6, "Password must be at least 6 characters")
     .required("Password is required"),
+  confirmPassword: yup
+    .string()
+    .oneOf([yup.ref("password")], "Passwords must match")
+    .required("Confirm Password is required"),
 });
 
 export default function RegisterScreen() {
   const [loading, setLoading] = useState(false);
   const navigation = useNavigation<NavigationProp<any>>();
   const formik = useFormik({
-    initialValues: { firstname: "", lastname: "", email: "", password: "" },
+    initialValues: {
+      fullname: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    },
     validationSchema: signupValidationSchema,
-    onSubmit: async () => handleSignup(),
+    onSubmit: async (values) => {
+      if (values.password !== values.confirmPassword) {
+        alert("Passwords do not match");
+        return;
+      }
+      handleSignup();
+    },
   });
 
   const handleLogin = async () => {
@@ -59,8 +73,7 @@ export default function RegisterScreen() {
       const userRef = doc(db, "users", user.uid);
       await setDoc(userRef, {
         uid: user.uid,
-        firstName: formik.values.firstname,
-        lastName: formik.values.lastname,
+        fullName: formik.values.fullname,
         email: formik.values.email,
       });
       console.log("Signup successful, user:", user);
@@ -87,28 +100,16 @@ export default function RegisterScreen() {
           />
           <Text style={styles.heading}>Create Account</Text>
           <View>
-            <Text style={{ marginTop: 8 }}>First Name</Text>
+            <Text style={{ marginTop: 8 }}>Full Name</Text>
             <TextInput
-              value={formik.values.firstname}
+              value={formik.values.fullname}
               style={styles.input}
-              placeholder="Enter your First Name..."
-              onChangeText={formik.handleChange("firstname")}
-              onBlur={formik.handleBlur("firstname")}
+              placeholder="Enter your Full Name..."
+              onChangeText={formik.handleChange("fullname")}
+              onBlur={formik.handleBlur("fullname")}
             />
-            {formik.touched.firstname && formik.errors.firstname && (
-              <Text style={styles.errorText}>{formik.errors.firstname}</Text>
-            )}
-
-            <Text style={{ marginTop: 8 }}>Last Name</Text>
-            <TextInput
-              value={formik.values.lastname}
-              style={styles.input}
-              placeholder="Enter your Last Name..."
-              onChangeText={formik.handleChange("lastname")}
-              onBlur={formik.handleBlur("lastname")}
-            />
-            {formik.touched.lastname && formik.errors.lastname && (
-              <Text style={styles.errorText}>{formik.errors.lastname}</Text>
+            {formik.touched.fullname && formik.errors.fullname && (
+              <Text style={styles.errorText}>{formik.errors.fullname}</Text>
             )}
 
             <Text style={{ marginTop: 8 }}>Email</Text>
@@ -137,6 +138,23 @@ export default function RegisterScreen() {
             {formik.touched.password && formik.errors.password && (
               <Text style={styles.errorText}>{formik.errors.password}</Text>
             )}
+
+            <Text style={{ marginTop: 8 }}>Confirm Password</Text>
+            <TextInput
+              secureTextEntry={true}
+              value={formik.values.confirmPassword}
+              style={styles.input}
+              placeholder="Confirm your Password..."
+              onChangeText={formik.handleChange("confirmPassword")}
+              onBlur={formik.handleBlur("confirmPassword")}
+              autoCapitalize="none"
+            />
+            {formik.touched.confirmPassword &&
+              formik.errors.confirmPassword && (
+                <Text style={styles.errorText}>
+                  {formik.errors.confirmPassword}
+                </Text>
+              )}
 
             {loading ? (
               <ActivityIndicator size="large" color="#0000ff" />
