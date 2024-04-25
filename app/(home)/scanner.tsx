@@ -1,21 +1,17 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, Text, Button, Alert } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { StyleSheet, View, Text, Button, TouchableOpacity, ScrollView, Image } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera/next';
-import { CameraType } from 'expo-camera';
 import { BarCodeScanner } from 'expo-barcode-scanner';
-// Import the BarCodeScanner type if available
-// import { BarCodeScanningResult } from 'expo-camera';
+import { Modalize } from 'react-native-modalize';
+import { CameraType } from 'expo-camera';
+import { Dimensions } from 'react-native';
 
-// Define this if type not available from imports
-interface BarCodeEvent {
-  type: string;
-  data: string;
-}
 
 export default function App() {
-  const [facing, setFacing] = useState('back');
+  const [facing, setFacing] = useState(CameraType.back);
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
+  const [productInfo, setProductInfo] = useState<string | null>(null);  const modalizeRef = useRef<Modalize>(null);
 
   if (!permission) {
     return <View />;
@@ -30,49 +26,121 @@ export default function App() {
     );
   }
 
-  const handleBarCodeScanned = ({ type, data }: BarCodeEvent) => {
-    setScanned(true);
-    Alert.alert("Barcode Scanned", `Type: ${type}, Data: ${data}`);
-    fetchDataFromAPI(data);
-    setTimeout(() => setScanned(false), 5000);
-  };
+  const handleBarCodeScanned = async ({ data }: { data: any }) => {
+  setScanned(true);
+  await fetchDataFromAPI(data);
+  modalizeRef.current?.open();
+  setTimeout(() => setScanned(false), 5000);
+}
 
   const fetchDataFromAPI = async (barcode: string) => {
     try {
       const response = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`);
       const json = await response.json();
       if (json.status === 1) {
-        Alert.alert('Product Found', `Product: ${json.product.product_name}`);
+        setProductInfo(JSON.stringify(json.product));
       } else {
-        Alert.alert('Product Not Found', 'This product is not listed in Open Food Facts database.');
+        setProductInfo('Product Not Found');
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to fetch data from Open Food Facts.');
+      setProductInfo('Product not found. :(');
     }
+  };
+
+  const renderProductDetails = (product: any) => {
+    if (!product) {
+      return <Text>Loading...</Text>;
+    }
+  
+    const { product_name, brands, image_url, ingredients_text } = product;
+  
+    return (
+      <View style={styles.productDetailsContainer}>
+        <Image
+          source={{ uri: image_url }}
+          style={styles.productImage}         
+          resizeMode="contain"
+        />
+        <View style={styles.productTextContainer}>
+          <Text style={styles.productName}>{product_name || 'Unknown Product'}</Text>
+          <Text style={styles.productBrand}>Brand: {brands || 'Unknown Brand'}</Text>
+          <Text style={styles.ingredientsHeading}>Contains:</Text>
+          <Text style={styles.ingredientsText}>{ingredients_text || 'Ingredients not available.'}</Text>
+        </View>
+      </View>
+    );
   };
 
   return (
     <View style={styles.container}>
       <CameraView
-    style={styles.camera}
-    facing={CameraType.back}
-    onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
-    barcodeScannerSettings={{
-    barcodeTypes: [BarCodeScanner.Constants.BarCodeType.qr, BarCodeScanner.Constants.BarCodeType.ean13],
-  }}
-  >
-        <View style={styles.buttonContainer}>
-          <Button onPress={() => setFacing(f => f === 'back' ? 'front' : 'back')} title="Flip Camera" />
-          {scanned && (
-            <Button onPress={() => setScanned(false)} title="Tap to Scan Again" />
-          )}
-        </View>
+        style={styles.camera}
+        facing={facing}
+        onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+        barcodeScannerSettings={{
+          barcodeTypes: [BarCodeScanner.Constants.BarCodeType.qr, BarCodeScanner.Constants.BarCodeType.ean13],
+        }}
+      >
+         <View style={styles.buttonContainer}>
+            {scanned && (
+              <Button onPress={() => setScanned(false)} title="Tap to Scan Again" />
+            )}
+          </View>
       </CameraView>
+      
+      <Modalize ref={modalizeRef} snapPoint={modalHeight} modalHeight={modalHeight}>
+        <ScrollView style={styles.modalContent}>
+          <TouchableOpacity
+            style={styles.closeButton}
+            onPress={() => modalizeRef.current?.close()}
+          >
+            <Text style={styles.closeButtonText}>X</Text>
+          </TouchableOpacity>
+          {productInfo ? renderProductDetails(JSON.parse(productInfo)) : <Text>Loading...</Text>}
+        </ScrollView>
+      </Modalize>
+
     </View>
   );
 }
 
+const screenHeight = Dimensions.get('window').height;
+const modalHeight = screenHeight * 0.8;
+
 const styles = StyleSheet.create({
+
+  productDetailsContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    borderBottomWidth: 1,
+    borderBottomColor: '#cccccc',
+    paddingBottom: 20,
+  },
+  productImage: {
+    width: 100,
+    height: 100,
+    marginRight: 20,
+  },
+  productTextContainer: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  productName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  productBrand: {
+    fontSize: 14,
+    color: '#666666',
+  },
+  ingredientsHeading: {
+    fontWeight: 'bold',
+    marginTop: 10,
+    fontSize: 16,
+  },
+  ingredientsText: {
+    fontSize: 14,
+  },
   container: {
     flex: 1,
     justifyContent: 'center',
@@ -87,4 +155,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
   },
+  modalContent: {
+    padding: 20,
+  },
+  
+  heading: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginTop: 10,
+  },
+  
+  closeButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    padding: 10,
+    zIndex: 2,
+  },
+  closeButtonText: {
+    fontSize: 18,
+    color: '#000',
+  },
+  // ... other styles if needed ...
 });
