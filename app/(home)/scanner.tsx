@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   StyleSheet,
   View,
@@ -8,6 +8,7 @@ import {
   ScrollView,
   Image,
   Pressable,
+  FlatList,
 } from "react-native";
 import { Text as StyledText } from "@/components/Themed";
 import { CameraView, useCameraPermissions } from "expo-camera/next";
@@ -17,12 +18,41 @@ import { CameraType } from "expo-camera";
 import { Dimensions } from "react-native";
 
 import { X } from "lucide-react-native";
+import { CheckIcon, XIcon } from "lucide-react-native";
+
+import {
+  dietaryOptions,
+  SelectedOptions,
+} from "@/components/DietaryPreferences";
+import { doc, getDoc } from "firebase/firestore";
+import { db, auth } from "@/config/firebaseConfig";
+
+type ProductType = {
+  product_name: string;
+  brands: string;
+  selected_images: {
+    front: {
+      display: {
+        en: string;
+      };
+    };
+  };
+  ingredients_text: string;
+  allergens_tags?: string[];
+};
+
+type UserDietaryPreferences = {
+  dietaryPreferences: SelectedOptions;
+};
 
 export default function ScannerScreen() {
   const [facing, setFacing] = useState(CameraType.back);
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [productInfo, setProductInfo] = useState<string | null>(null);
+  const [userDietaryPreferences, setUserDietaryPreferences] =
+    useState<SelectedOptions>({});
+
   const modalizeRef = useRef<Modalize>(null);
 
   if (!permission) {
@@ -58,9 +88,21 @@ export default function ScannerScreen() {
     );
   }
 
+  const fetchUserDietaryPreferences = async (userId: string) => {
+    // Retrieve user preferences and set them in state
+    const docRef = doc(db, "users", userId);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      setUserDietaryPreferences(docSnap.data().dietaryPreferences);
+    }
+  };
+
   const handleBarCodeScanned = async ({ data }: { data: any }) => {
     setScanned(true);
     await fetchDataFromAPI(data);
+    if (auth.currentUser) {
+      await fetchUserDietaryPreferences(auth.currentUser.uid);
+    }
     modalizeRef.current?.open();
     setTimeout(() => setScanned(false), 5000);
   };
@@ -81,7 +123,45 @@ export default function ScannerScreen() {
     }
   };
 
-  const renderProductDetails = (product: any) => {
+  const checkCompliance = (
+    allergensTags: string[]
+  ): { [key: string]: boolean } => {
+    return dietaryOptions.reduce<{ [key: string]: boolean }>((acc, option) => {
+      const isCompliant = !allergensTags.some((tag) =>
+        option.keywords.includes(tag.replace("en:", ""))
+      );
+
+      acc[option.key] = isCompliant;
+      return acc;
+    }, {});
+  };
+
+  const renderDietaryCompliance = (product: ProductType) => {
+    const compliance = checkCompliance(product.allergens_tags || []);
+
+    const renderItem = ({ item }) => (
+      <View style={styles.dietaryOptionContainer}>
+        <Text style={styles.dietaryOptionText}>{item.label}</Text>
+        {compliance[item.key] ? (
+          <CheckIcon size={24} color="green" />
+        ) : (
+          <XIcon size={24} color="red" />
+        )}
+      </View>
+    );
+
+    return (
+      <FlatList
+        data={dietaryOptions}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.key}
+        numColumns={2}
+        // Ensure there is no extra spacing on the sides
+        contentContainerStyle={styles.dietaryOptionsList}
+      />
+    );
+  };
+  const renderProductDetails = (product: ProductType) => {
     if (!product) {
       return <Text>Loading...</Text>;
     }
@@ -103,11 +183,26 @@ export default function ScannerScreen() {
             Brand: {brands || "Unknown Brand"}
           </Text>
           <Text style={styles.ingredientsHeading}>Contains:</Text>
-          <ScrollView style={{ height: "10%" }}>
+          <ScrollView
+            style={{
+              height: 140,
+              borderColor: "gainsboro",
+              borderWidth: 4,
+            }}
+            contentContainerStyle={{
+              padding: 4,
+              paddingBottom: 20, // This will provide space at the bottom inside the scroll view
+            }}
+            showsVerticalScrollIndicator={true} // Show scrollbar while scrolling
+          >
             <Text style={styles.ingredientsText}>
               {ingredients_text || "Ingredients not available."}
             </Text>
           </ScrollView>
+          <View style={styles.complianceContainer}>
+            <Text style={styles.dietaryHeading}>Dietary Preferences: </Text>
+            {renderDietaryCompliance(product)}
+          </View>
         </View>
       </View>
     );
@@ -140,6 +235,10 @@ export default function ScannerScreen() {
         ref={modalizeRef}
         snapPoint={modalHeight}
         modalHeight={modalHeight}
+        scrollViewProps={{
+          showsVerticalScrollIndicator: true,
+          contentContainerStyle: styles.modalContainerContent,
+        }}
       >
         <ScrollView style={styles.modalContent}>
           <TouchableOpacity
@@ -164,18 +263,19 @@ const modalHeight = screenHeight * 0.8;
 
 const styles = StyleSheet.create({
   productDetailsContainer: {
-    flexDirection: "row",
-    alignItems: "flex-start",
+    flex: 1, // This will make sure the container takes up the remaining space
+    justifyContent: "center",
+    marginRight: 10,
     borderBottomWidth: 1,
     borderBottomColor: "#cccccc",
-    marginTop: 28,
+    marginTop: 38,
     paddingBottom: 20,
   },
   productImage: {
-    width: 200,
-    height: 200,
-    marginRight: 20,
+    width: 350,
+    height: 350,
     borderRadius: 10,
+    alignSelf: "center",
   },
   productTextContainer: {
     flex: 1,
@@ -184,6 +284,7 @@ const styles = StyleSheet.create({
   productName: {
     fontSize: 18,
     fontWeight: "bold",
+    flexShrink: 1,
   },
   productBrand: {
     fontSize: 14,
@@ -214,11 +315,43 @@ const styles = StyleSheet.create({
   modalContent: {
     padding: 20,
   },
+  modalContainerContent: { paddingBottom: 20 },
 
   heading: {
     fontSize: 22,
     fontWeight: "bold",
     marginTop: 10,
+  },
+  dietaryHeading: {
+    fontWeight: "bold",
+    marginTop: 10,
+    fontSize: 16,
+  },
+  dietaryOption: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ccc",
+  },
+  dietaryOptionText: {},
+  dietaryOptionContainer: {
+    flex: 1, // Take up all available space in the column
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 8,
+    // Adjust the margin as needed, or remove it if you're handling spacing in the list
+    margin: 5,
+  },
+  dietaryOptionsList: {
+    // If you want no padding on the sides, set paddingHorizontal to 0
+    paddingHorizontal: 0,
+  },
+
+  complianceContainer: {
+    marginTop: 16,
   },
 
   closeButton: {

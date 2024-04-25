@@ -9,14 +9,14 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Text as StyledText, View as StyledView } from "@/components/Themed";
+import { dietaryOptions } from "@/components/DietaryPreferences";
 
 import { useFocusEffect } from "@react-navigation/native";
 import { useState, useCallback } from "react";
 import { CheckIcon, XIcon } from "lucide-react-native";
-import { db, auth } from "@/config/firebaseConfig"; // Import your Firebase configuration
+import { db, auth } from "@/config/firebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
 import { User } from "firebase/auth";
-import { dietaryOptions } from "@/components/DietaryPreferences";
 
 type Product = {
   code: string;
