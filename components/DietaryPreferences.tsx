@@ -33,6 +33,7 @@ type DietaryPreferencesProps = {
 type DietaryOption = {
   key: string;
   label: string;
+  keywords: string[];
   icon: React.ElementType;
 };
 
@@ -40,18 +41,53 @@ export type SelectedOptions = {
   [key: string]: boolean;
 };
 
-const dietaryOptions: DietaryOption[] = [
-  { key: "vegan", label: "Vegan", icon: VeganIcon },
-  { key: "dairyFree", label: "Dairy-Free", icon: MilkOffIcon },
-  { key: "vegatarian", label: "Vegetarian", icon: SaladIcon },
-  { key: "glutenFree", label: "Gluten-Free", icon: WheatOffIcon },
-  { key: "noBeef", label: "No Beef", icon: BeefIcon },
-  { key: "nut", label: "Nut Allergy", icon: PeanutIcon },
-  { key: "noPork", label: "No Pork", icon: HamIcon },
-  { key: "noSoy", label: "No Soy", icon: SoyIcon },
-  { key: "noFish", label: "No Fish", icon: FishIcon },
-  { key: "noSesame", label: "No Sesame", icon: SesameIcon },
-  { key: "noShell", label: "No Shellfish", icon: ShellfishIcon },
+export const dietaryOptions: DietaryOption[] = [
+  {
+    key: "vegan",
+    label: "Vegan",
+    keywords: ["vegan", "eggs", "milk", "fish", "pork", "beef", "shellfish"],
+    icon: VeganIcon,
+  },
+  {
+    key: "vegatarian",
+    label: "Vegetarian",
+    keywords: ["pork", "beef", "fish", "shellfish"],
+    icon: SaladIcon,
+  },
+  {
+    key: "dairyFree",
+    label: "Dairy-Free",
+    keywords: ["milk", "whey"],
+    icon: MilkOffIcon,
+  },
+  {
+    key: "glutenFree",
+    label: "Gluten-Free",
+    keywords: ["yeast", "gluten", "wheat-gluten", "gelatin"],
+    icon: WheatOffIcon,
+  },
+  { key: "noBeef", label: "No Beef", keywords: ["beef"], icon: BeefIcon },
+  {
+    key: "nut",
+    label: "Nut Allergy",
+    keywords: ["nuts", "peanuts", "hazelnuts", "cashew-nuts", "pine-nuts"],
+    icon: PeanutIcon,
+  },
+  { key: "noPork", label: "No Pork", keywords: ["pork"], icon: HamIcon },
+  { key: "noSoy", label: "No Soy", keywords: ["soybeans"], icon: SoyIcon },
+  { key: "noFish", label: "No Fish", keywords: ["fish"], icon: FishIcon },
+  {
+    key: "noSesame",
+    label: "No Sesame",
+    keywords: ["sesame-seeds", "sesame-oil"],
+    icon: SesameIcon,
+  },
+  {
+    key: "noShell",
+    label: "No Shellfish",
+    keywords: ["shellfish"],
+    icon: ShellfishIcon,
+  },
 ];
 
 export default function DietaryPreferences({

@@ -83,9 +83,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.indy9.myfoodscanapp'
+    namespace 'com.indy9.myfoodscan'
     defaultConfig {
-        applicationId 'com.indy9.myfoodscanapp'
+        applicationId 'com.indy9.myfoodscan'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
