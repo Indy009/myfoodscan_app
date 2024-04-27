@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import {
   StyleSheet,
   View,
@@ -7,10 +7,9 @@ import {
   TouchableOpacity,
   ScrollView,
   Image,
-  Pressable,
   FlatList,
 } from "react-native";
-import { Text as StyledText } from "@/components/Themed";
+import { Text as StyledText, View as StyledView } from "@/components/Themed";
 import { CameraView, useCameraPermissions } from "expo-camera/next";
 import { BarCodeScanner } from "expo-barcode-scanner";
 import { Modalize } from "react-native-modalize";
@@ -26,6 +25,7 @@ import {
 } from "@/components/DietaryPreferences";
 import { doc, getDoc } from "firebase/firestore";
 import { db, auth } from "@/config/firebaseConfig";
+import { useScannedProducts } from "@/contexts/ScannedProductsContext";
 
 type ProductType = {
   product_name: string;
@@ -41,8 +41,9 @@ type ProductType = {
   allergens_tags?: string[];
 };
 
-type UserDietaryPreferences = {
-  dietaryPreferences: SelectedOptions;
+type DietaryOption = {
+  key: string;
+  label: string;
 };
 
 export default function ScannerScreen() {
@@ -52,6 +53,7 @@ export default function ScannerScreen() {
   const [productInfo, setProductInfo] = useState<string | null>(null);
   const [userDietaryPreferences, setUserDietaryPreferences] =
     useState<SelectedOptions>({});
+  const { addProduct } = useScannedProducts();
 
   const modalizeRef = useRef<Modalize>(null);
 
@@ -114,7 +116,9 @@ export default function ScannerScreen() {
       );
       const json = await response.json();
       if (json.status === 1) {
-        setProductInfo(JSON.stringify(json.product));
+        const product = json.product;
+        addProduct(product);
+        setProductInfo(JSON.stringify(product));
       } else {
         setProductInfo("Product Not Found");
       }
@@ -135,32 +139,46 @@ export default function ScannerScreen() {
       return acc;
     }, {});
   };
-
   const renderDietaryCompliance = (product: ProductType) => {
-    const compliance = checkCompliance(product.allergens_tags || []);
+    const complianceResults = checkCompliance(product.allergens_tags || []);
 
-    const renderItem = ({ item }) => (
-      <View style={styles.dietaryOptionContainer}>
-        <Text style={styles.dietaryOptionText}>{item.label}</Text>
-        {compliance[item.key] ? (
-          <CheckIcon size={24} color="green" />
-        ) : (
-          <XIcon size={24} color="red" />
-        )}
-      </View>
-    );
+    // This is an arrow function, which should be passed to renderItem
+    const renderItem = ({ item }: { item: DietaryOption }) => {
+      // Define isSelected and isCompliant inside the renderItem function
+      const isSelected = userDietaryPreferences[item.key];
+      const isCompliant = complianceResults[item.key];
+
+      return (
+        <View style={styles.dietaryOptionContainer}>
+          <StyledText
+            style={[
+              styles.dietaryOptionText,
+              isSelected && isCompliant ? styles.highlightedText : {},
+            ]}
+          >
+            {item.label}
+          </StyledText>
+          {isCompliant ? (
+            <CheckIcon size={24} color="green" />
+          ) : (
+            <XIcon size={24} color="red" />
+          )}
+        </View>
+      );
+    };
 
     return (
       <FlatList
         data={dietaryOptions}
-        renderItem={renderItem}
+        renderItem={renderItem} // Pass the arrow function here
         keyExtractor={(item) => item.key}
         numColumns={2}
-        // Ensure there is no extra spacing on the sides
         contentContainerStyle={styles.dietaryOptionsList}
+        scrollEnabled={false}
       />
     );
   };
+
   const renderProductDetails = (product: ProductType) => {
     if (!product) {
       return <Text>Loading...</Text>;
@@ -169,42 +187,44 @@ export default function ScannerScreen() {
     const { product_name, brands, selected_images, ingredients_text } = product;
 
     return (
-      <View style={styles.productDetailsContainer}>
+      <StyledView style={styles.productDetailsContainer}>
         <Image
           source={{ uri: selected_images.front.display.en }}
           style={styles.productImage}
-          resizeMode="contain"
+          resizeMode="cover"
         />
         <View style={styles.productTextContainer}>
-          <Text style={styles.productName}>
+          <StyledText style={styles.productName}>
             {product_name || "Unknown Product"}
-          </Text>
+          </StyledText>
           <Text style={styles.productBrand}>
             Brand: {brands || "Unknown Brand"}
           </Text>
-          <Text style={styles.ingredientsHeading}>Contains:</Text>
+          <StyledText style={styles.ingredientsHeading}>Contains:</StyledText>
           <ScrollView
             style={{
-              height: 140,
-              borderColor: "gainsboro",
+              height: 120,
+              borderColor: "#666666",
               borderWidth: 4,
             }}
             contentContainerStyle={{
               padding: 4,
-              paddingBottom: 20, // This will provide space at the bottom inside the scroll view
+              paddingBottom: 20,
             }}
-            showsVerticalScrollIndicator={true} // Show scrollbar while scrolling
+            showsVerticalScrollIndicator={false}
           >
-            <Text style={styles.ingredientsText}>
+            <StyledText style={styles.ingredientsText}>
               {ingredients_text || "Ingredients not available."}
-            </Text>
+            </StyledText>
           </ScrollView>
           <View style={styles.complianceContainer}>
-            <Text style={styles.dietaryHeading}>Dietary Preferences: </Text>
+            <StyledText style={styles.dietaryHeading}>
+              Dietary Preferences:
+            </StyledText>
             {renderDietaryCompliance(product)}
           </View>
         </View>
-      </View>
+      </StyledView>
     );
   };
 
@@ -221,6 +241,7 @@ export default function ScannerScreen() {
           ],
         }}
       >
+        <View style={styles.barcodeMarker} />
         <View style={styles.buttonContainer}>
           {scanned && (
             <Button
@@ -235,24 +256,23 @@ export default function ScannerScreen() {
         ref={modalizeRef}
         snapPoint={modalHeight}
         modalHeight={modalHeight}
+        modalStyle={styles.modalStyle}
         scrollViewProps={{
-          showsVerticalScrollIndicator: true,
+          showsVerticalScrollIndicator: false,
           contentContainerStyle: styles.modalContainerContent,
         }}
       >
-        <ScrollView style={styles.modalContent}>
-          <TouchableOpacity
-            style={styles.closeButton}
-            onPress={() => modalizeRef.current?.close()}
-          >
-            <X color="#5071A5" size={32} strokeWidth={3} />
-          </TouchableOpacity>
-          {productInfo ? (
-            renderProductDetails(JSON.parse(productInfo))
-          ) : (
-            <Text>Loading...</Text>
-          )}
-        </ScrollView>
+        <TouchableOpacity
+          style={styles.closeButton}
+          onPress={() => modalizeRef.current?.close()}
+        >
+          <X color="#5071A5" size={32} strokeWidth={2.2} />
+        </TouchableOpacity>
+        {productInfo ? (
+          renderProductDetails(JSON.parse(productInfo))
+        ) : (
+          <Text>Loading...</Text>
+        )}
       </Modalize>
     </View>
   );
@@ -262,37 +282,54 @@ const screenHeight = Dimensions.get("window").height;
 const modalHeight = screenHeight * 0.8;
 
 const styles = StyleSheet.create({
+  barcodeMarker: {
+    borderColor: "#fff",
+    borderWidth: 2,
+    borderRadius: 10,
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    width: 250,
+    height: 150,
+    transform: [{ translateY: -75 }, { translateX: -125 }],
+  },
+  separator: {
+    marginTop: 16,
+    height: 1,
+    width: "100%",
+  },
   productDetailsContainer: {
-    flex: 1, // This will make sure the container takes up the remaining space
+    flex: 1,
     justifyContent: "center",
-    marginRight: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#cccccc",
-    marginTop: 38,
-    paddingBottom: 20,
+    paddingVertical: 40,
+    paddingHorizontal: 20,
   },
   productImage: {
-    width: 350,
-    height: 350,
+    width: 380,
+    height: 380,
     borderRadius: 10,
     alignSelf: "center",
+    marginTop: 20,
   },
   productTextContainer: {
     flex: 1,
     justifyContent: "center",
   },
   productName: {
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: "bold",
     flexShrink: 1,
+    marginTop: 4,
   },
   productBrand: {
-    fontSize: 14,
+    fontSize: 16,
+    fontWeight: "500",
     color: "#666666",
   },
   ingredientsHeading: {
     fontWeight: "bold",
     marginTop: 10,
+    marginBottom: 4,
     fontSize: 16,
   },
   ingredientsText: {
@@ -312,11 +349,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
   },
-  modalContent: {
-    padding: 20,
+  modalStyle: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    overflow: "hidden",
   },
-  modalContainerContent: { paddingBottom: 20 },
-
+  modalContainerContent: {
+    marginBottom: 20,
+  },
   heading: {
     fontSize: 22,
     fontWeight: "bold",
@@ -332,32 +372,37 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
   },
-  dietaryOptionText: {},
+  dietaryOptionText: {
+    fontSize: 14,
+    fontWeight: "500",
+    flex: 1,
+  },
   dietaryOptionContainer: {
-    flex: 1, // Take up all available space in the column
+    flex: 1,
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "center",
     alignItems: "center",
     padding: 8,
-    // Adjust the margin as needed, or remove it if you're handling spacing in the list
-    margin: 5,
+    margin: 4,
   },
   dietaryOptionsList: {
-    // If you want no padding on the sides, set paddingHorizontal to 0
     paddingHorizontal: 0,
   },
 
   complianceContainer: {
-    marginTop: 16,
+    marginTop: 2,
+  },
+  highlightedText: {
+    fontWeight: "bold",
+    color: "#1170ff", // Use a color that stands out
+    backgroundColor: "#38fcffdd", // Optionally add a background color
   },
 
   closeButton: {
     position: "absolute",
-    top: -10,
-    right: -10,
+    top: 4,
+    right: -2,
     padding: 10,
     zIndex: 2,
   },

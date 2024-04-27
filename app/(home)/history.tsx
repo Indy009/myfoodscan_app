@@ -12,11 +12,12 @@ import { Text as StyledText, View as StyledView } from "@/components/Themed";
 import { dietaryOptions } from "@/components/DietaryPreferences";
 
 import { useFocusEffect } from "@react-navigation/native";
-import { useState, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { CheckIcon, XIcon } from "lucide-react-native";
 import { db, auth } from "@/config/firebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
 import { User } from "firebase/auth";
+import { useScannedProducts } from "@/contexts/ScannedProductsContext";
 
 type Product = {
   code: string;
@@ -43,21 +44,26 @@ const screenWidth = Dimensions.get("window").width;
 const productWidth = (screenWidth - 40) / 2;
 
 export default function HistoryScreen() {
-  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [dietaryPreferences, setDietaryPreferences] = useState({});
+  const { products } = useScannedProducts();
 
-  const fetchDietaryPreferences = async (user: User) => {
-    const userPrefDoc = doc(db, "users", user.uid);
-    const userSnapshot = await getDoc(userPrefDoc);
+  useEffect(() => {
+    const fetchDietaryPreferences = async () => {
+      if (auth.currentUser) {
+        const userPrefDoc = doc(db, "users", auth.currentUser.uid);
+        const userSnapshot = await getDoc(userPrefDoc);
+        if (userSnapshot.exists()) {
+          setDietaryPreferences(userSnapshot.data().dietaryPreferences);
+        } else {
+          console.log("No such document!");
+        }
+      }
+      setLoading(false);
+    };
 
-    if (userSnapshot.exists()) {
-      const data = userSnapshot.data();
-      return data.dietaryPreferences;
-    } else {
-      console.log("No such document!");
-    }
-  };
+    fetchDietaryPreferences();
+  }, []);
 
   const checkCompliance = (allergenTags: string[], preferences: any) => {
     for (const [preference, isActive] of Object.entries(preferences)) {
@@ -82,98 +88,11 @@ export default function HistoryScreen() {
     return true; // no allergens found, return true (check mark)
   };
 
-  const eanCodes: string[] = [
-    "070470403915",
-    "0009800895250",
-    "0025293001718",
-    "00016000106673",
-    "0818290010605",
-    "00051000032348",
-    "00016000147119",
-    "0041190409457",
-    "0070662402030",
-    "0072250914765",
-  ];
-
-  const getProduct = async (ean: string): Promise<Product | null> => {
-    const url = `https://world.openfoodfacts.net/api/v0/product/${ean}`;
-
-    try {
-      const res = await fetch(url, {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-      });
-      const result: ProductResponse = await res.json();
-      if (result.status === 0) {
-        console.log("Product not found or API call failed: ", result.code);
-        return null;
-      }
-      const allergensArray = result.product?.allergens_tags || [];
-      if (result.product) {
-        return {
-          ...result.product,
-          code: result.product.code, // Ensure code is always assigned
-          allergens: allergensArray,
-        };
-      }
-      return null;
-    } catch (error) {
-      console.error("Failed to fetch product:", error);
-      return null;
-    }
-  };
-
-  const fetchProducts = async () => {
-    setLoading(true);
-    const fetchedProducts: Product[] = [];
-
-    for (const ean of eanCodes) {
-      const product = await getProduct(ean);
-      if (product) {
-        fetchedProducts.push(product);
-      }
-    }
-
-    return fetchedProducts;
-  };
-
-  useFocusEffect(
-    useCallback(() => {
-      let isActive = true;
-
-      const fetchAllData = async () => {
-        try {
-          const user = auth.currentUser;
-          if (user && isActive) {
-            const preferences = await fetchDietaryPreferences(user);
-            setDietaryPreferences(preferences);
-            const fetchedProducts = await fetchProducts();
-            setProducts(fetchedProducts);
-          }
-        } catch (error) {
-          console.error(error);
-        } finally {
-          if (isActive) setLoading(false);
-        }
-      };
-
-      fetchAllData();
-
-      // Return a cleanup function to set isActive to false when screen loses focus
-      return () => {
-        isActive = false;
-      };
-    }, [])
-  );
-
   return (
     <StyledView style={styles.container}>
       <ScrollView style={{ paddingTop: 70 }}>
         <StyledText style={styles.title}>History</StyledText>
-        <View style={styles.listContent}>
+        <View>
           {loading ? (
             <ActivityIndicator
               size="large"
@@ -227,7 +146,11 @@ export default function HistoryScreen() {
               columnWrapperStyle={styles.listWrapper}
             />
           ) : (
-            <Text>No product found</Text>
+            <View style={styles.centeredMessageContainer}>
+              <StyledText style={styles.centeredMessageText}>
+                No Product Scanned
+              </StyledText>
+            </View>
           )}
         </View>
       </ScrollView>
@@ -268,9 +191,15 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
   },
-  listContent: {
-    // display: "flex",
-    // justifyContent: "center",
+  centeredMessageContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  centeredMessageText: {
+    fontSize: 22,
+    fontWeight: "bold",
+    textAlign: "center", // Ensure the text itself is centered if it wraps to a new line
   },
   listWrapper: {
     justifyContent: "space-between",
